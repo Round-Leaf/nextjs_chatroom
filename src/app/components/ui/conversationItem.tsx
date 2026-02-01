@@ -2,7 +2,7 @@ import { conversation } from "@/types/conversation"
 import { Avatar, ListItem, ListItemAvatar, ListItemButton, ListItemText, Typography } from "@mui/material"
 import { useState } from "react"
 
-export function ConversationList({conversation,onClick,isSelected}:{conversation:conversation,onClick:(id:number)=>void,isSelected:boolean}){
+export function ConversationItem({conversation,onClick,isSelected}:{conversation:conversation,onClick:(id:number)=>void,isSelected:boolean}){
     return <>
 <ListItem disablePadding key={conversation.id}>
   <ListItemButton

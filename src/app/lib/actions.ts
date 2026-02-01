@@ -2,6 +2,7 @@ import sql from "./sql"
 import { message, messageWithAvatarURL } from "@/types/message"
 import { user, userInGroup } from "@/types/user";
 import { conversation } from "@/types/conversation";
+import bcrypt from "bcryptjs";
 export async function sendMessage(message: Omit<message,"created_at"|"id">){
     const result:message[] = await sql`INSERT INTO messages(conversation_id,user_id,content,type)
     VALUES(${message.conversation_id},${message.user_id},${message.content},${message.type})
@@ -10,16 +11,15 @@ export async function sendMessage(message: Omit<message,"created_at"|"id">){
     return result[0];
     
 }
-export async function createUser(user:Omit<user,"created_at"|"id">){
-    await sql`INSERT INTO users(username,password_hash,avatar_url)
-    VALUES(${user.username},${user.password_hash},${user.avatar_url})
-    `;
-}
-export async function getUser(user_id:number){
+export async function getUser(username:string){
     const user:user[] = await sql`
-    SELECT * FROM users WHERE id=${user_id}
+    SELECT * FROM users WHERE username=${username}
     `
     return user;
+}
+export async function createUser(username:string,password:string){
+    const password_hash = await bcrypt.hash(password,10);
+    await sql`INSERT INTO users(username,password_hash) VALUES(${username},${password_hash})`
 }
 export async function getAvatarUrl(user_id:number){
     const user = await sql`
