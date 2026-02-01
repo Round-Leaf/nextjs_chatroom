@@ -8,3 +8,4 @@ export const messageSchema = z.object({
     created_at: z.string()
 })
 export type message = z.infer<typeof messageSchema>;
+export type messageWithAvatarURL = message & {avatar_url:string}
