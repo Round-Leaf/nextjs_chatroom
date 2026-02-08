@@ -17,9 +17,18 @@ export async function getUser(username:string){
     `
     return user;
 }
+export async function searchUser(keyword:string){
+    const searchPattern=`%${keyword}%`;
+    const users:user[] = await sql`
+    SELECT * FROM users WHERE username LIKE ${searchPattern}
+    `
+    return users;
+}
 export async function createUser(username:string,password:string){
+    const randomNumber = Math.floor(Math.random() * 9000) + 1000;
+    const avatar_url = "https://i.pravatar.cc/"+randomNumber;
     const password_hash = await bcrypt.hash(password,10);
-    await sql`INSERT INTO users(username,password_hash) VALUES(${username},${password_hash})`
+    await sql`INSERT INTO users(username,password_hash,avatar_url) VALUES(${username},${password_hash},${avatar_url})`
 }
 export async function getAvatarUrl(user_id:number){
     const user = await sql`
@@ -28,10 +37,25 @@ export async function getAvatarUrl(user_id:number){
     return user[0].avatar_url;
 }
 export async function createConversation(conversation:Omit<conversation,"created_at"|"id">){
-    await sql `INSERT INTO conversations(type,name,avatar_url) VALUES(${conversation.type},${conversation.name},${conversation.avatar_url??'https://i.pravatar.cc/150'})`
+    const newConversation:conversation[] = await sql `INSERT INTO conversations(type,name,avatar_url)
+    VALUES(${conversation.type},
+    ${conversation.name},
+    ${conversation.avatar_url??'https://i.pravatar.cc/150'})
+    RETURNING *
+    `
+    return newConversation[0];
 }
-
-export async function addUserToConversation(user_id:number,conversation_id:number,role:'owner'|'admin'|'user'){
+export async function addUsersToConversation(conversation_id:number,members_id:number[]){
+    type sqlConversationMemberType = {user_id:number,conversation_id:number,role:string};
+    let sqlConversationMembers:sqlConversationMemberType[] = [];
+    for(let id of members_id){
+        sqlConversationMembers.push({user_id:id,conversation_id:conversation_id,role:"member"});
+    }
+    console.log(sqlConversationMembers)
+    await sql`INSERT INTO conversation_members
+    ${sql(sqlConversationMembers,"user_id","conversation_id","role")}`
+}
+export async function addUserToConversation(user_id:number,conversation_id:number,role:'owner'|'admin'|'member'){
     await sql `INSERT INTO conversation_members(conversation_id,user_id,role)
     VALUES(${conversation_id},${user_id},${role})
     `

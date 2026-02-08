@@ -1,13 +1,14 @@
 // actions/auth.ts
 "use server"
-import { signIn } from "../auth";
-
-export async function loginAction(formData: FormData) {
+import { FormStatus } from "react-dom";
+import { signIn } from "@/auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+export async function loginAction(initialState: any,formData: FormData) {
   try {
     await signIn("credentials", formData);
+    return {message:"Login Success",success:true};
   } catch (error) {
-    // 注意：Auth.js 在重定向时会抛出错误，这是正常的
-    // 如果是凭据错误，可以在这里处理
-    throw error;
+    if(isRedirectError(error))  throw error;
+    return {message:"Login Failed",error:(error as Error).message,success:false};
   }
 }

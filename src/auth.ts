@@ -2,7 +2,7 @@ import NextAuth, { User } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 // Your own logic for dealing with plaintext password strings; be careful!
 import { object, string } from "zod"
-import { getUser } from "./lib/actions"
+import { getUser } from "./app/lib/actions"
 import bcrypt from "bcryptjs"
 
 export const signInSchema = object({
@@ -10,7 +10,7 @@ export const signInSchema = object({
     .min(1, "Username is required"),
   password: string()
     .min(1, "Password is required")
-    .min(8, "Password must be more than 8 characters")
+    .min(6, "Password must be more than 6 characters")
     .max(32, "Password must be less than 32 characters"),
 })
 
@@ -40,8 +40,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("Incorrect password")
         }
         // return user object with their profile data
-        return {id:String(user.id),name:user.username}
+        console.log("id is "+user.id)
+        return {id:String(user.id),name:user.username,image:user.avatar_url}
       },
     }),
   ],
+  callbacks:{
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    // 步骤 B: 将 id 从 JWT token 中存入 session 对象
+    // 只有这一步做了，客户端 useSession() 才能看到 id
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+    authorized: async({auth}) => {
+      return !!auth
+    }
+  }
 })

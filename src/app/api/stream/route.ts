@@ -1,8 +1,12 @@
+import { auth } from "@/auth";
 import { chatEmitter } from "@/app/lib/chat-events";
 import { NextRequest, NextResponse } from "next/server";
 export async function GET(request:NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const user_id = searchParams.get("user_id")
+      const session = await auth();
+      if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      };
+      const user_id = Number(session?.user?.id);
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {

@@ -8,20 +8,22 @@ import Message from "./components/ui/message";
 import { MessageInput } from "./components/ui/messageInput";
 import { ConversationList } from "./components/ui/conversationList";
 import { useChat } from "@/hooks/useChat";
+import { useSession } from "next-auth/react";
 
 const ChatRoom = () => {
   const searchParams = useSearchParams();
-  const user_id = Number(searchParams.get("user_id"));
-
+  const { data: session } = useSession()
+  const user_id = Number(session?.user?.id);
   // 使用自定义 Hook 抽离所有复杂逻辑
   const {
     conversationList,
     messages,
     currentConversation,
+    setConversationList,
     setCurrentConversation,
     sendMessage,
     scrollRef,
-  } = useChat(user_id);
+  } = useChat();
 
   const activeChat = conversationList.find((c) => c.id === currentConversation);
 
@@ -30,6 +32,7 @@ const ChatRoom = () => {
       {/* 左侧列表 */}
       <ConversationList
         conversations={conversationList}
+        setConversations={setConversationList}
         currentConversation={currentConversation}
         setCurrentConversation={setCurrentConversation}
       />

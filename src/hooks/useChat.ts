@@ -3,7 +3,7 @@ import axios from "axios";
 import { conversation } from "@/types/conversation";
 import { messageWithAvatarURL } from "@/types/message";
 
-export const useChat = (user_id: number) => {
+export const useChat = () => {
   const [conversationList, setConversationList] = useState<conversation[]>([]);
   const [messages, setMessages] = useState<Record<number, messageWithAvatarURL[]>>({});
   const [currentConversation, setCurrentConversation] = useState(-1);
@@ -22,21 +22,19 @@ export const useChat = (user_id: number) => {
 
   // 1. 获取列表
   useEffect(() => {
-    if (!user_id) return;
-    axios.get("/api/get_conversation_list", { params: { user_id } })
+    axios.get("/api/get_conversation_list")
       .then(res => setConversationList(res.data));
-  }, [user_id]);
+  }, []);
 
   // 2. SSE 长连接
   useEffect(() => {
-    if (!user_id) return;
-    const eventSource = new EventSource(`/api/stream/?user_id=${user_id}`);
+    const eventSource = new EventSource(`/api/stream`);
     eventSource.onmessage = (event) => {
       const newMessage = JSON.parse(event.data);
       addMessages([newMessage]);
     };
     return () => eventSource.close();
-  }, [user_id]);
+  }, []);
 
   // 3. 切换聊天时获取历史消息
   useEffect(() => {
@@ -57,7 +55,6 @@ export const useChat = (user_id: number) => {
     if (currentConversation === -1) return;
     await axios.post("/api/send_message", {
       conversation_id: currentConversation,
-      user_id,
       content: text,
       type: "text",
     });
@@ -65,6 +62,7 @@ export const useChat = (user_id: number) => {
 
   return {
     conversationList,
+    setConversationList,
     messages,
     currentConversation,
     setCurrentConversation,
